@@ -10,9 +10,85 @@
 ##############################
 
 preorder:
-    #Define your code here
+	addi $sp, $sp, -16			# stack
+	sw $s0, 0($sp)				# store s on the stack
+	sw $s1, 4($sp)				# store s on the stack
+	sw $s2, 8($sp)	
+	sw $ra, 12($sp)
+	move $s0, $a0				# store a regs
+	move $s1, $a1	
+	move $s2, $a2		
+	lw $s0, ($s0)		
+	
+	li $t0, 0x0000ffff			# last 16 bits
+	and $t0, $s0, $t0			# int nodeValue = currNodeAddr.value; // Get the 16-bit integer value
+		
+itof:	
+	li $t3, 0				# number of nums converted
+	li $t1, 10				# for dividing	
+convert_loop:	
+	div $t0, $t1				# number/10
+	mfhi $t2				# remainder
+	mflo $t0 				# quotient
+	addi $t2, $t2, 48			# remainder + '0'
+	addi $sp, $sp, -1			# stack
+	sb $t2, 0($sp)				# store letter on the stack
+	addi $t3, $t3, 1			# num nums coverted++
+	beqz $t0, store_loop
+	j convert_loop	
+store_loop:
+	beqz $t3, itof_done			# all chars stored
+	move $a0, $s2				# file descriptor
+	move $a1, $sp				# adress of char buffer
+	li $a2, 1				# num chars to write
+	li $v0, 15				# syscall
+	syscall
+	addi $sp, $sp, 1			# reset stack up
+	addi $t3, $t3, -1			# numb to store--
+	j store_loop
+itof_done:					# write(fd, "\n", 1); // Write a newline to file
+	move $a0, $s2				# file desc
+	la $a1, newLine				# buffer
+	li $a2, 1				# numb of chars to write
+	li $v0, 15				# syscall
+	syscall
+	
+	li $t0, 0				# int nodeIndex;
+	li $t0, 0xff000000			# first 8 bits
+	and $t0, $s0, $t0			# nodeIndex = currNodeAddr.left; // Fetch the 8-bit index Left Node
+	srl $t0, $t0, 24			# bring it back now yall
+	# check for left node
+	beq $t0, 255, checkRightNode		# if (nodeIndex != 255) {
+		# Determine the address of the left child in node array
+		sll $t0, $t0, 2				# offset = nodeIndex * 4
+		add $a0, $t0, $s1			# int leftNodeAddr = nodes + leftOffset;
+		move $a1, $s1				# nodes[]
+		move $a2, $s2				# fd
+		jal preorder				# preorder(leftNodeAddr, nodes, fd);
+
+checkRightNode:
+	li $t0, 0				# int nodeIndex;
+	li $t0, 0x00ff0000			# right
+	and $t0, $s0, $t0			# nodeIndex = currNodeAddr.right; // Fetch the 8-bit index Left Node
+	srl $t0, $t0, 16			# bring it back now yall
+	# check for right node
+	beq $t0, 255, preorder_done		# if (nodeIndex != 255) {
+		# Determine the address of the left child in node array
+		sll $t0, $t0, 2				# offset = nodeIndex * 4
+		add $a0, $t0, $s1			# int leftNodeAddr = nodes + leftOffset;
+		move $a1, $s1				# nodes[]
+		move $a2, $s2				# fd
+		jal preorder				# preorder(leftNodeAddr, nodes, fd);
+	
+preorder_done:
+	lw $s0, 0($sp)			# store s on the stack
+	lw $s1, 4($sp)			# store s on the stack
+	lw $s2, 8($sp)			# store s on the stack
+	lw $ra, 12($sp)
+	addi $sp, $sp, 16		# stack
 	jr $ra
 
+    	
 ##############################
 # PART 2 FUNCTIONS
 ##############################
@@ -95,6 +171,8 @@ add_random_nodes:
 #################################################################
 .data
 .align 2  # Align next items to word boundary
+
+newLine: .word '\n'
 
 #place any additional data declarations here
 
