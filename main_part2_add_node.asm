@@ -36,7 +36,7 @@ main:
 	#################################################################
 	# add_node - with linear_search
 	#################################################################
-	la $a0, flag_bst_4
+	la $a0, flag_bst_2
 	li $a1, 10 # only the first 10 bits of the flag array are valid
 	jal linear_search
 	move $s1, $v0

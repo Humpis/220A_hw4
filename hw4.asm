@@ -94,12 +94,38 @@ preorder_done:
 ##############################
 
 linear_search:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -10
-    ###########################################
-    jr $ra
+	li $t0, 0				# counter
+	
+linear_search_loop:
+	beq $t0, $a1, linear_search_error	# end reached
+	add $t1, $a0, $t0			# base + counter
+	lb $t1, ($t1)				# contents of byte
+	li $t2, 0				# counter 2
+	
+	linear_search_loop2:
+	beq $t0, $a1, linear_search_error	# end reached
+	bne $t2, 8, linear_search2_cont		# end of byte reached
+		addi $t0, $t0, 1		# counter++
+		j linear_search_loop			
+	
+	linear_search2_cont:
+	li $t3, 1				# for masking, to be shifted
+	sllv $t3, $t3, $t2			# shift mask by counter2 bits left
+	and $t3, $t3, $t1			# mask and contents of byte
+	srlv $t3, $t3, $t2			# shift important bit right by counter 2 bits
+	beqz $t3, linear_search_done		# bit is 0
+	addi $t2, $t2, 1			# counter2++
+	j linear_search_loop2	
+	
+linear_search_error:
+	li $v0, -1
+	jr $ra
+
+linear_search_done:
+	li $t1, 8				# for mult
+	mul $t0, $t0, $t1			# result =  counter * 8
+	add $v0, $t0, $t2			# result = result + counter 2
+   	jr $ra
 
 set_flag:
     #Define your code here
