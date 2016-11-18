@@ -95,17 +95,18 @@ preorder_done:
 
 linear_search:
 	li $t0, 0				# counter
+	li $t4, 0				# offset counter
 	
 linear_search_loop:
 	beq $t0, $a1, linear_search_error	# end reached
-	add $t1, $a0, $t0			# base + counter
+	add $t1, $a0, $t4			# base + counter
 	lb $t1, ($t1)				# contents of byte
 	li $t2, 0				# counter 2
 	
 	linear_search_loop2:
 	beq $t0, $a1, linear_search_error	# end reached
 	bne $t2, 8, linear_search2_cont		# end of byte reached
-		addi $t0, $t0, 1		# counter++
+		addi $t4, $t4, 1		# counter++
 		j linear_search_loop			
 	
 	linear_search2_cont:
@@ -115,6 +116,7 @@ linear_search_loop:
 	srlv $t3, $t3, $t2			# shift important bit right by counter 2 bits
 	beqz $t3, linear_search_done		# bit is 0
 	addi $t2, $t2, 1			# counter2++
+	addi $t0, $t0, 1			# counter++
 	j linear_search_loop2	
 	
 linear_search_error:
@@ -122,9 +124,10 @@ linear_search_error:
 	jr $ra
 
 linear_search_done:
-	li $t1, 8				# for mult
-	mul $t0, $t0, $t1			# result =  counter * 8
-	add $v0, $t0, $t2			# result = result + counter 2
+	#li $t1, 8				# for mult
+	#mul $t0, $t0, $t1			# result =  counter * 8
+	#add $v0, $t0, $t2			# result = result + counter 2
+	move $v0, $t0				# result
    	jr $ra
 
 set_flag:
