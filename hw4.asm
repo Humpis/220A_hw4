@@ -131,12 +131,41 @@ linear_search_done:
    	jr $ra
 
 set_flag:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -20
-    ###########################################
-    jr $ra
+	bltz $a1, set_flag_error		# index < 0
+	bge $a1, $a3, set_flag_error		# index >= max size
+	andi $a2, $a2, 1			# least significant bit of setValue
+	li $t0, 8				# for division
+	div $a1, $t0 				# index / 8
+	mflo $t0				# quotient
+	mfhi $t1 				# remainder
+	add $a0, $a0, $t0			# byte we need
+	lb $t0, ($a0)				# contents of byte
+	li $t2, 1				# mask
+	sllv $t2, $t2, $t1			# mask shifted to bit we need
+	and $t2, $t0, $t2			# byte masked 
+	srlv $t2, $t2, $t1			# shifted back 
+	beq $t2, $a2, set_flag_done		# important bit already equals setValue
+	beqz $a2, set_flag_remove		# flag is 1 but needs to be 0, else flag is 0 and needs to be 1
+	li $t2, 1				# bit to add
+	sllv $t2, $t2, $t1			# shifted to where it needs to be
+	add $t0, $t0, $t2			# contents + bit to add
+	sb $t0, ($a0)				# store back
+	j set_flag_done
+	
+set_flag_remove:  
+	li $t2, 1				# bit to subtract
+	sllv $t2, $t2, $t1			# shifted to where it needs to be
+	sub $t0, $t0, $t2			# contents - bit to add
+	sb $t0, ($a0)				# store back
+	j set_flag_done
+	
+set_flag_error:
+	li $v0, 0
+	jr $ra
+	
+set_flag_done:
+	li $v0, 1
+	jr $ra
 
 find_position:
     #Define your code here
