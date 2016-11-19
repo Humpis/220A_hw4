@@ -168,13 +168,41 @@ set_flag_done:
 	jr $ra
 
 find_position:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -30
-    li $v1, -40
-    ###########################################
-    jr $ra
+	addi $sp ,$sp, -4				# save
+	sw $ra, 0($sp)
+	andi $a2, $a2, 65535				# convert 32 bit to 16 bit
+	li $t0, 4					# for mult
+	mul $t0, $t0, $a1				# currindex * 4
+	add $t0, $t0, $a0				# nodes[] + currIndex
+	lw $t0 ($t0)					# contents of the node at currIndex
+	andi $t1, $t0, 65535				# value of node
+	bge $a2, $t1, find_position_right		# if (newValue < nodes[currIndex].value ) {
+		li $t1, 0xff000000				# mask for left node
+		and $t1, $t0, $t1				# left node
+		srl $t1, $t1, 24				# shift right
+		bne $t1, 255, find_position_left_recurse	# if (leftIndex == 255) {
+			move $v0, $a1					# currIndex
+			li $v1, 0					# 0
+			j find_position_done				# return
+		find_position_left_recurse:			# } else {
+			move $a1, $t1					# left index
+			jal find_position
+			j find_position_done
+	find_position_right:				# } else {
+		li $t1, 0x00ff0000				# mask for right node
+		and $t1, $t0, $t1				# right node
+		srl $t1, $t1, 16				# shift right
+		bne $t1, 255, find_position_right_recurse	# if (rightIndex == 255) {
+			move $v0, $a1					# currIndex
+			li $v1, 1					# 1
+			j find_position_done				# return
+		find_position_right_recurse:			# } else {
+			move $a1, $t1					# right index
+			jal find_position
+find_position_done:
+	lw $ra, 0($sp)					# load
+	addi $sp ,$sp, 4
+    	jr $ra
 
 add_node:
     #Define your code here
