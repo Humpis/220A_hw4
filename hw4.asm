@@ -205,11 +205,115 @@ find_position_done:
     	jr $ra
 
 add_node:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -50
-    ###########################################
+	lw $t0, 0($sp)					# max size
+	lw $t1, 4($sp)					# flag[]
+	addi $sp, $sp, 8
+	
+    	addi $sp, $sp, -28				# save stack
+    	sw $s0, 0($sp)
+    	sw $s1, 4($sp)
+    	sw $s2, 8($sp)
+    	sw $s3, 12($sp)
+    	sw $s4, 16($sp)
+    	sw $s5, 20($sp)
+    	sw $ra, 24($sp)
+    	
+    	move $s0, $a0					# Node[] nodes
+    	move $s1, $a1					# int rootIndex
+    	move $s2, $a2					# int newValue
+    	move $s3, $a3					# int newIndex
+   	move $s4, $t1					# byte[] flags
+    	move $s5, $t0					# int maxSize
+    	
+    	andi $s1, $s1, 255				# rootIndex = toUnsignedByte(rootIndex);
+    	andi $s3, $s3, 255				# newIndex = toUnsignedByte(newIndex);
+    	
+    	bge $s1, $s5, add_node_error			# if (rootIndex >= maxSize
+    	bge $s3, $s5, add_node_error			# || newIndex >= maxSize) return 0;
+    	
+    	andi $s2, $s2, 65535				# newValue = toSignedHalfWord(newValue);
+    	
+    	# // Determine if a root node actually exists at rootIndex
+	li $t0, 8					# for divide
+	div $s1, $t0					# root index / 8
+	mflo $t0					# quotient
+	mfhi $t1					# remainder
+	add $t0, $t0, $s4				# base + byte offset
+	lb $t0, ($t0)					# contents of that
+	li $t2, 1					# mask
+	sllv $t2, $t2, $t1				# mask shifted
+	and $t2, $t2, $t0				# bit of byte we need
+	srlv $t2, $t2, $t1				# shifted back. boolean validRoot = nodeExists(rootIndex);
+	
+	bne $t2, 1, add_node_invalid			# if (validRoot) { // if a valid root node already exists
+		#// Find a valid position in the BST with newValue as the comparison
+		move $a0, $s0					# nodes
+		move $a1, $s1					# rootIndex
+		move $a2, $s2					# newValue
+		jal find_position				# int parentIndex, leftOrRight = find_position(nodes, rootIndex,
+		bnez $v0, add_node_right			# if (leftOrRight == left) {
+			# // update parent’s Left Node inde
+			li $t0, 4					# for mult
+			mul $t0, $v0, $t0				# parnetIndex * 4	
+			add $t0, $t0, $s0				# nodes[parentIndex]
+			lw $t1, ($t0)					# contents of node
+			li $t2, 0x00ffffff				# mask for all but left node
+			and $t2, $t2, $t1				# all but left node
+			sll $t1, $s3, 24				# shift newIndex to its place
+			add $t2, $t2, $t1				# .left = newIndex;
+			sw $t2, ($t0)					# nodes[parentIndex].left = newIndex
+			j add_node_final				# }
+		add_node_right:					# } else {
+			# // update parent’s right Node inde
+			li $t0, 4					# for mult
+			mul $t0, $v0, $t0				# parnetIndex * 4	
+			add $t0, $t0, $s0				# nodes[parentIndex]
+			lw $t1, ($t0)					# contents of node
+			li $t2, 0xff00ffff				# mask for all but right node
+			and $t2, $t2, $t1				# all but right node
+			sll $t1, $s3, 16				# shift newIndex to its place
+			add $t2, $t2, $t1				# .right = newIndex;
+			sw $t2, ($t0)					# nodes[parentIndex].right = newIndex;
+			j add_node_final				# }
+	add_node_invalid: #  // we must add newValue as a root node instead
+		move $s3, $s1					# newIndex = rootIndex;
+	add_node_final:
+		li $t0, 4
+    		mul $t0, $s3, $t0				# newindex * 4
+    		add $t0, $s0, $t0				# nodes[new Index]
+    		li $t1, 0xffff0000				# left and right are 255
+    		add $t1, $t1, $s2				# leaf node with new value
+    		sw $t1, ($t0)
+    		
+    		move $a0, $s4					# flags
+    		move $a1, $s3					# newIndex,
+    		li $a2, 1					# 1
+    		move $a3, $s5					# max size
+    		jal set_flag
+    		j add_node_done
+    		
+add_node_error:
+    	lw $s0, 0($sp)					# load stack
+    	lw $s1, 4($sp)
+    	lw $s2, 8($sp)
+    	lw $s3, 12($sp)
+    	lw $s4, 16($sp)
+    	lw $s5, 20($sp)
+    	lw $ra, 24($sp)
+    	addi $sp, $sp, 28
+    	li $v0, 0
+	jr $ra
+	
+add_node_done:   	
+    	lw $s0, 0($sp)					# load stack
+    	lw $s1, 4($sp)
+    	lw $s2, 8($sp)
+    	lw $s3, 12($sp)
+    	lw $s4, 16($sp)
+    	lw $s5, 20($sp)
+    	lw $ra, 24($sp)
+    	addi $sp, $sp, 28
+    	#li $v0, 1					# should be from set flags 
 	jr $ra
 
 ##############################
