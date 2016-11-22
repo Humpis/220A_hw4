@@ -355,12 +355,44 @@ get_parent:
     	addi $sp ,$sp, -4				# childValue = toSignedHalfWord(childValue);
 	sw $a2, ($sp)
 	lh $a2, ($sp)					# convert signed 32 bit to 16 bit
+	addi $sp ,$sp, 4
 	
 	sll $t0, $a1, 2					# currentIndex *4
 	add $t0, $t0, $a0				# node[currentINddex]
+	lw $t2, ($t0)					# contents of node
 	lh $t1, ($t0)					# node[currentINddex].value
-
-    	
+	bge $a2, $t1, get_parent_right			# if (childValue < nodes[currIndex].value) {
+		li $t0, 0xff000000				# mask for left node
+		and $t0, $t0, $t2				# left node
+		srl $t0, $t0, 24				# shift right
+		bne $t0, 255, get_parent_left_checkCI		# if (leftIndex == 255) {	
+			li $v0, -1 					# return -1;
+			j get_parent_done				# return
+		get_parent_left_checkCI:
+		bne $t0, $a3, get_parent_left_recurse		# } else if (leftIndex == childIndex) {
+			move $v0, $a1					# return currIndex
+			li $v1, 0					# return 0
+			j get_parent_done				# return	
+		get_parent_left_recurse:			# } else {
+			move $a1, $t0					# leftIndex
+			jal get_parent					# get_parent(nodes, leftIndex, childValue, childIndex);
+			j get_parent_done				# return
+	get_parent_right:
+		li $t0, 0x00ff0000				# mask for right node
+		and $t0, $t0, $t2				# right node
+		srl $t0, $t0, 16				# shift right
+		bne $t0, 255, get_parent_right_checkCI		# if (rightIndex == 255) {	
+			li $v0, -1 					# return -1;
+			j get_parent_done				# return
+		get_parent_right_checkCI:
+		bne $t0, $a3, get_parent_right_recurse		# } else if (rightIndex == childIndex) {
+			move $v0, $a1					# return currIndex
+			li $v1, 1					# return 0
+			j get_parent_done				# return	
+		get_parent_right_recurse:			# } else {
+			move $a1, $t0					# rightIndex
+			jal get_parent					# get_parent(nodes, rightIndex, childValue, childIndex);
+			j get_parent_done				# return
 get_parent_done:
 	lw $ra, 0($sp)					# lod from stack
     	addi $sp, $sp, 4
