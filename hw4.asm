@@ -22,6 +22,28 @@ preorder:
 	
 	li $t0, 0x0000ffff			# last 16 bits
 	and $t0, $s0, $t0			# int nodeValue = currNodeAddr.value; // Get the 16-bit integer value
+	#addi $sp ,$sp, -4				# convert signed 32 bit to 16 bit
+	#sw $s0, ($sp)
+	#lh $t0, ($sp)					# convert signed 32 bit to 16 bit
+	#addi $sp ,$sp, 4				# finiosh concert
+		
+	li $t4, 0x8000
+	blt $t0, $t4,  itof			# positive number
+	li $t4, -1
+	xor $t0, $t0, $t4
+	addi $t0, $t0, 1	
+	li $t4, 0x0000ffff			# last 16 bits
+	and $t0, $t4, $t0			# int nodeValue = currNodeAddr.value; // Get the 16-bit integer value
+	
+	addi $sp, $sp, -1
+	li $t4, '-'
+	sb $t4, ($sp)
+	move $a0, $s2				# file descriptor
+	move $a1, $sp				# adress of char buffer
+	li $a2, 1				# num chars to write
+	li $v0, 15				# syscall
+	syscall
+	addi $sp, $sp, 1			# reset stack up
 		
 itof:	
 	li $t3, 0				# number of nums converted
@@ -174,12 +196,13 @@ find_position:
 	addi $sp ,$sp, -4				# convert signed 32 bit to 16 bit
 	sw $a2, ($sp)
 	lh $a2, ($sp)					# convert signed 32 bit to 16 bit
-	addi $sp ,$sp, 4				# save
+	addi $sp ,$sp, 4				# finiosh concert
 	li $t0, 4					# for mult
 	mul $t0, $t0, $a1				# currindex * 4
 	add $t0, $t0, $a0				# nodes[] + currIndex
-	lw $t0 ($t0)					# contents of the node at currIndex
-	andi $t1, $t0, 65535				# value of node
+	#lw $t0 ($t0)					# contents of the node at currIndex
+	#andi $t1, $t0, 65535				# value of node
+	lh $t1 ($t0)					# value of node
 	bge $a2, $t1, find_position_right		# if (newValue < nodes[currIndex].value ) {
 		li $t1, 0xff000000				# mask for left node
 		and $t1, $t0, $t1				# left node
@@ -325,13 +348,23 @@ add_node_done:
 ##############################
 
 get_parent:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -60
-    li $v1, -70
-    ###########################################
-    jr $ra
+	addi $sp, $sp, -4				# save stack
+    	sw $ra, 0($sp)
+    	
+    	andi $a3, $a3, 255				# childIndex = toUnsignedByte(childIndex);
+    	addi $sp ,$sp, -4				# childValue = toSignedHalfWord(childValue);
+	sw $a2, ($sp)
+	lh $a2, ($sp)					# convert signed 32 bit to 16 bit
+	
+	sll $t0, $a1, 2					# currentIndex *4
+	add $t0, $t0, $a0				# node[currentINddex]
+	lh $t1, ($t0)					# node[currentINddex].value
+
+    	
+get_parent_done:
+	lw $ra, 0($sp)					# lod from stack
+    	addi $sp, $sp, 4
+    	jr $ra
 
 find_min:
     #Define your code here
