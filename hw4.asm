@@ -170,7 +170,11 @@ set_flag_done:
 find_position:
 	addi $sp ,$sp, -4				# save
 	sw $ra, 0($sp)
-	andi $a2, $a2, 65535				# convert 32 bit to 16 bit
+	#andi $a2, $a2, 65535				# convert 32 bit to 16 bit
+	addi $sp ,$sp, -4				# convert signed 32 bit to 16 bit
+	sw $a2, ($sp)
+	lh $a2, ($sp)					# convert signed 32 bit to 16 bit
+	addi $sp ,$sp, 4				# save
 	li $t0, 4					# for mult
 	mul $t0, $t0, $a1				# currindex * 4
 	add $t0, $t0, $a0				# nodes[] + currIndex
@@ -251,7 +255,7 @@ add_node:
 		move $a1, $s1					# rootIndex
 		move $a2, $s2					# newValue
 		jal find_position				# int parentIndex, leftOrRight = find_position(nodes, rootIndex,
-		bnez $v0, add_node_right			# if (leftOrRight == left) {
+		bnez $v1, add_node_right			# if (leftOrRight == left) {
 			# // update parent’s Left Node inde
 			li $t0, 4					# for mult
 			mul $t0, $v0, $t0				# parnetIndex * 4	

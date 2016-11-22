@@ -32,7 +32,6 @@ main:
 	syscall
 	syscall
 
-
 	#################################################################
 	# add_node - with linear_search
 	#################################################################
@@ -73,6 +72,36 @@ main:
 	la $a0, endl
 	syscall
 	syscall
+	
+	####
+# open file
+	li $v0, 13
+	la $a0, file1
+	li $a1, 1        # Open for writing (flags are 0: read, 1: write)
+	li $a2, 0        # mode is ignored
+	syscall          # open a file (file descriptor returned in $v0)
+	move $s0, $v0    # save the file descriptor
+
+	# Call preorder traversal of the tree starting at nodes2
+	la $a0, bst_4
+	addi $a0, $a0, 8
+	la $a1, bst_4
+	move $a2, $s0
+	jal preorder
+
+	#print newline to file
+	li $v0, 15
+	move $a0, $s0
+	la $a1, endl
+	li $a2, 1
+	syscall
+
+	# close file
+	li $v0, 16         # system call for close file
+	move $a0, $s0      # file descriptor to close
+	syscall            # close file
+
+####
 
 done:
 	li $v0, 10
@@ -83,6 +112,7 @@ done:
 #################################################################
 .data
 endl: .asciiz "\n"
+file1: .asciiz "preorder.trav"
 .align 2
 
 nodes2: .word 0x01060008 0x02030003 0xFFFF0001 0x04050006 0xFFFF0004 0xFFFF0007 0xFF07000A 0x08FF000E 0xFFFF000D #root 0, sample tree
