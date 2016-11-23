@@ -426,10 +426,13 @@ find_min_done:
     	jr $ra
 
 delete_node:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -100
+	addi $sp, $sp, -4				# save stack
+    	sw $ra, 0($sp)
+	jal get_parent
+	jal find_min
+    li $v0, 1
+    lw $ra, 0($sp)					# lod from stack
+    	addi $sp, $sp, 4
     ###########################################
     jr $ra
 
