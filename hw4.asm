@@ -399,13 +399,31 @@ get_parent_done:
     	jr $ra
 
 find_min:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -80
-    li $v1, -90
-    ###########################################
-    jr $ra
+	addi $sp, $sp, -4				# save stack
+    	sw $ra, 0($sp)
+    	
+	sll $t0, $a1, 2					# currindex * 4
+	add $t0, $t0, $a0				# node[currIndex]
+	lw $t1, ($t0)					# contents of that
+	li $t0, 0xff000000				# mask for left node
+	and $t0, $t0, $t1				# left node
+	srl $t0, $t0, 24				# shift right
+	bne $t0, 255, find_min_recurse
+		move $v0, $a1				# currindex
+		li $v1, 1				# leaf
+		li $t2, 0xffff0000
+		bge $t1, $t2, find_min_leaf		#isLeaf(nodes[currIndex]);
+			li $v1, 0
+		find_min_leaf:
+			j find_min_done			# return
+	find_min_recurse:
+		move $a1, $t0				# left index
+		jal find_min				# find_min(nodes, leftIndex);
+		j find_min_done				# return
+find_min_done:
+	lw $ra, 0($sp)					# lod from stack
+    	addi $sp, $sp, 4
+    	jr $ra
 
 delete_node:
     #Define your code here
